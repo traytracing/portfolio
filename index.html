@@ -3,12 +3,157 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Luminary</title>
+  <title>traytracing — graphics &amp; simulation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <canvas id="gl"></canvas>
-  <p class="error" id="error" hidden></p>
+  <div class="sky" aria-hidden="true">
+  <svg class="doodles" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <filter id="air" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="80"/></filter>
+      <filter id="soft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="7"/></filter>
+      <filter id="edge" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="1.6"/></filter>
+      <filter id="grain" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="5" result="n"/>
+        <feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0.9 0.9 0.9 0 -0.9"/>
+      </filter>
+      <linearGradient id="base" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#1d0b36"/><stop offset=".55" stop-color="#150726"/><stop offset="1" stop-color="#220d3d"/>
+      </linearGradient>
+    </defs>
+    <rect width="1600" height="1000" fill="url(#base)"/>
+
+    <!-- airbrushed colour fields -->
+    <g filter="url(#air)">
+      <ellipse cx="260" cy="180" rx="420" ry="260" fill="#5b2a9e" opacity=".55"/>
+      <ellipse cx="900" cy="760" rx="520" ry="240" fill="#3d1d6e" opacity=".7"/>
+      <ellipse cx="1500" cy="300" rx="360" ry="300" fill="#6c35b8" opacity=".45"/>
+      <ellipse cx="1330" cy="170" rx="230" ry="160" fill="#ffd23f" opacity=".5"/>
+      <ellipse cx="170" cy="880" rx="260" ry="150" fill="#f2b705" opacity=".32"/>
+    </g>
+
+    <!-- broad soft brush strokes -->
+    <g fill="none" stroke-linecap="round" filter="url(#soft)">
+      <path d="M-60,330 C260,200 480,520 820,380 S1320,180 1680,330" stroke="#7a3fc4" stroke-width="110" opacity=".34"/>
+      <path d="M-40,760 C220,640 520,900 880,800 S1380,640 1660,780" stroke="#4b2488" stroke-width="130" opacity=".55"/>
+      <path d="M200,-40 C380,160 300,420 520,560 S760,860 700,1060" stroke="#6c35b8" stroke-width="90" opacity=".3"/>
+      <path d="M1000,-40 C1180,120 1080,340 1280,470 S1560,640 1660,560" stroke="#ffd23f" stroke-width="70" opacity=".4"/>
+      <path d="M-30,900 C120,820 260,900 420,830" stroke="#f2b705" stroke-width="60" opacity=".4"/>
+    </g>
+
+    <!-- crisp-ish wet-paint accents -->
+    <g fill="none" stroke-linecap="round" filter="url(#edge)">
+      <path d="M1180,110 C1280,60 1420,70 1500,150" stroke="#ffe27a" stroke-width="16" opacity=".65"/>
+      <path d="M1220,170 C1300,130 1400,140 1460,200" stroke="#ffd23f" stroke-width="10" opacity=".55"/>
+      <path d="M60,880 C150,840 250,850 330,890" stroke="#ffd23f" stroke-width="12" opacity=".5"/>
+      <path d="M40,260 C200,170 360,300 560,230" stroke="#b58cf0" stroke-width="9" opacity=".4"/>
+      <path d="M700,930 C900,880 1100,950 1320,890" stroke="#9b5de5" stroke-width="11" opacity=".4"/>
+      <path d="M1380,640 C1460,600 1540,640 1600,700" stroke="#b58cf0" stroke-width="8" opacity=".35"/>
+    </g>
+
+    <!-- canvas grain -->
+    <rect width="1600" height="1000" filter="url(#grain)" opacity=".14" style="mix-blend-mode:soft-light"/>
+  </svg>
+  </div>
+  <header class="top">
+    <a class="mark" href="https://github.com/traytracing">traytracing</a>
+    <nav>
+      <a href="#work">work</a>
+      <a href="#velvet">velvet</a>
+      <a href="#about">about</a>
+      <a href="#contact">contact</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Luminary</h1>
+      <p class="lede">A gravity simulator that plays back as a field of black holes.</p>
+    </section>
+
+    <figure class="window">
+      <div class="screen">
+        <canvas id="gl"></canvas>
+        <p class="error" id="error" hidden></p>
+        <aside id="panel" class="panel">
+          <label>bodies <output></output><input type="range" data-p="count" min="2" max="60" step="1"></label>
+          <label>gravity (k) <output></output><input type="range" data-p="k" min="1" max="50" step="0.5"></label>
+          <label>start speed <output></output><input type="range" data-p="speed" min="0" max="2" step="0.05"></label>
+          <label>trail length <output></output><input type="range" data-p="trail" min="0" max="6" step="0.25"></label>
+          <label>seed <input type="number" id="seed" min="1" step="1"></label>
+          <div class="btns"><button id="cam">camera: follow</button></div>
+          <div class="btns"><button id="rerun">new run</button><button id="reset">reset</button></div>
+        </aside>
+      </div>
+      <figcaption>An N-body simulator in C++ with an adaptive-timestep integrator, CUDA-interpolated playback and GLSL black-hole shaders.</figcaption>
+    </figure>
+
+    <section id="work">
+      <h2>work</h2>
+      <ul class="work">
+        <li>
+          <a href="https://github.com/traytracing/Luminary">
+            <span class="no">01</span>
+            <span class="name">Luminary</span>
+            <span class="desc">N-body simulator and GPU renderer</span>
+            <span class="arrow">↗</span>
+          </a>
+        </li>
+        <li>
+          <a href="#velvet">
+            <span class="no">02</span>
+            <span class="name">Velvet Engine</span>
+            <span class="desc">Stylized rendering engine (closed source)</span>
+            <span class="arrow">↓</span>
+          </a>
+        </li>
+        <li>
+          <a href="#">
+            <span class="no">03</span>
+            <span class="name">Project three</span>
+            <span class="desc">Short description</span>
+            <span class="arrow">↗</span>
+          </a>
+        </li>
+      </ul>
+    </section>
+
+    <section id="velvet">
+      <h2>velvet engine</h2>
+      <p class="blurb">A stylized rendering engine. The source stays private, so this is the gallery: stills straight out of the renderer.</p>
+      <div class="gallery">
+        <figure><button type="button" class="shot" aria-label="Open render 01"><img src="images/velvet/01.svg" alt="Velvet Engine render 01" loading="lazy" width="1600" height="900"></button><figcaption>render 01</figcaption></figure>
+        <figure><button type="button" class="shot" aria-label="Open render 02"><img src="images/velvet/02.svg" alt="Velvet Engine render 02" loading="lazy" width="1000" height="1250"></button><figcaption>render 02</figcaption></figure>
+        <figure><button type="button" class="shot" aria-label="Open render 03"><img src="images/velvet/03.svg" alt="Velvet Engine render 03" loading="lazy" width="1200" height="1200"></button><figcaption>render 03</figcaption></figure>
+        <figure><button type="button" class="shot" aria-label="Open render 04"><img src="images/velvet/04.svg" alt="Velvet Engine render 04" loading="lazy" width="1500" height="1000"></button><figcaption>render 04</figcaption></figure>
+        <figure><button type="button" class="shot" aria-label="Open render 05"><img src="images/velvet/05.svg" alt="Velvet Engine render 05" loading="lazy" width="1000" height="1250"></button><figcaption>render 05</figcaption></figure>
+        <figure><button type="button" class="shot" aria-label="Open render 06"><img src="images/velvet/06.svg" alt="Velvet Engine render 06" loading="lazy" width="1600" height="900"></button><figcaption>render 06</figcaption></figure>
+      </div>
+    </section>
+
+    <section id="about">
+      <h2>about</h2>
+      <p>A few sentences about you go here: what you make, what you care about, what you're looking for.</p>
+    </section>
+
+    <section id="contact">
+      <h2>contact</h2>
+      <p><a href="https://github.com/traytracing">github.com/traytracing</a></p>
+    </section>
+  </main>
+
+  <footer>© <a href="https://github.com/traytracing">traytracing</a></footer>
+  <dialog id="lightbox"><img alt=""><button type="button" aria-label="Close">×</button></dialog>
   <script src="main.js"></script>
+  <script>
+    const lb = document.getElementById("lightbox"), lbImg = lb.querySelector("img");
+    document.querySelectorAll(".shot").forEach(b => b.addEventListener("click", () => {
+      const i = b.querySelector("img"); lbImg.src = i.src; lbImg.alt = i.alt; lb.showModal();
+    }));
+    lb.addEventListener("click", () => lb.close());
+  </script>
 </body>
 </html>

@@ -22,8 +22,8 @@ const K = 10.0;                                   // Simulation.cpp: const GLflo
 const FOV = 60 * Math.PI / 180;                   // Settings.h: FOVdeg 60
 const NEAR = 0.01, FAR = 1000;                    // Settings.h
 const TRAIL_COLOR = [0.749, 0.659, 0.565, 1.0];   // Settings.h: InitialTrailColor
-const TRAIL_TIME = 2.0;                           // Settings.h: trailTime
-const TRAIL_WIDTH = 5.0;                          // Settings.h: trailWidth (px)
+let TRAIL_TIME = 2.0;                           // Settings.h: trailTime
+let TRAIL_WIDTH = 5.0;                          // Settings.h: trailWidth (px)
 const FPS = 60;                                   // Settings.h: Initialfps
 const STAR_COUNT = 1800;
 
@@ -636,6 +636,8 @@ void main() {
     ? texture(starLarge, vec2((f_UV.x + f_StarIndex) / 6.0, 1.0 - f_UV.y))
     : texture(starSmall, vec2((f_UV.x + f_StarIndex) / 16.0, 1.0 - f_UV.y));
   int brightness = int(clamp(floor(g.x * 7.0), 0.0, 7.0));
+  // small stars would vanish against the tan nebula (same palette steps): keep them in the bright steps
+  if (f_StarType == 1) brightness = max(brightness, 4);
   daColor = vec4(starbrightness * newP[brightness], g.a * u_fade);
 }`;
 
@@ -742,7 +744,9 @@ const starVao = gl.createVertexArray();
 }
 
 /* black holes: per-instance center, normal, size, seed */
-const OBJECT_COUNT = 30;   // MakeOriginalSim: const int objectCount = 30
+const OBJECT_COUNT = 60;   // buffer capacity; the live count is params.count (MakeOriginalSim uses 30)
+// Settings-panel parameters (defaults = MakeOriginalSim)
+const params = { count: 30, k: 10, spread: 20, speed: 0.5, duration: 30, trail: 2, trailWidth: 5, size: 1, follow: true, seed: 1 };   // duration is fixed at 30 s
 const holeData = new Float32Array(OBJECT_COUNT * 8);
 const holeVao = gl.createVertexArray();
 const holeBuf = gl.createBuffer();
@@ -815,7 +819,7 @@ const project = (m, p) => [
 // The only change: dt is scaled by DT_SCALE so the motion is smooth with just two
 // bodies (unscaled, it strides ~2 s at a time). The close-pass error still happens.
 const f32 = Math.fround;
-const TOTAL_SIM_TIME = 30;   // MakeOriginalSim's totalSimTime (10 in the original, 30 here)
+let TOTAL_SIM_TIME = 30;   // MakeOriginalSim's totalSimTime (10 in the original, 30 here)
 const MAX_FRAMES = 25000;   // starts needing more steps than this are re-rolled (keeps load time ~1 s)
 const DT_SCALE = 1;          // unscaled: exactly Luminary's step
 
@@ -829,7 +833,7 @@ const v4norm = a => v4mul(a, f32(1 / f32(Math.sqrt(v4dot(a, a)))));             
 
 // MakeOriginalSim's loop. Returns the recorded frames [{ t, pos }] as WriteSimToFile stores them.
 function makeSim(init) {
-  const k = f32(10.0);
+  const k = f32(params.k);
   let state = init.map(o => ({ pos: o.pos.map(f32), vel: o.vel.map(f32) }));
   const sim = [{ t: 0, pos: state.map(o => o.pos) }];
   let simTime = f32(0), deltaTime = f32(0.0000000001);
@@ -855,6 +859,7 @@ function makeSim(init) {
     return f32(f32(dtgeo * f32(0.9)) * DT_SCALE);
   };
 
+  TOTAL_SIM_TIME = params.duration;
   while (simTime < TOTAL_SIM_TIME) {
     if (sim.length > MAX_FRAMES) return null;   // a very close pass makes dt tiny: too slow, reject this start
     deltaTime = updateSim();
@@ -898,27 +903,43 @@ function sample(frames, renderTime) {
 // Size = 0.2, random seed in [0, 20000).
 let bodies = [], frames = [], runStart = 0, clock = 0;
 let trails = [];
+function mulberry32(a) { return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 function newRun() {
-  const U = (a, b) => a + Math.random() * (b - a);
+  const rand = mulberry32(params.seed);   // same seed = same run
+  const U = (a, b) => a + rand() * (b - a);
   let init;
   do {
     init = [];
-    for (let i = 0; i < OBJECT_COUNT; i++)
-      init.push({ pos: [U(-20, 20), U(-20, 20), U(-20, 20)], vel: [U(-0.5, 0.5), U(-0.5, 0.5), U(-0.5, 0.5)] });
+    for (let i = 0; i < params.count; i++) {
+      const R = params.spread, V = params.speed;
+      init.push({ pos: [U(-R, R), U(-R, R), U(-R, R)], vel: [U(-V, V), U(-V, V), U(-V, V)] });
+    }
     frames = makeSim(init);
   } while (!frames);
   bodies = init.map((o, i) => {
-    const theta = 2 * Math.PI * Math.random(), phi = Math.acos(1 - 2 * Math.random());
+    const theta = 2 * Math.PI * rand(), phi = Math.acos(1 - 2 * rand());
     return {
       pos: o.pos.slice(),
       bnormal: [Math.sin(phi) * Math.cos(theta), Math.sin(phi) * Math.sin(theta), Math.cos(phi)],
-      size: 0.2 * Math.log((i + 1) * 50), seed: 20000 * Math.random(), scale: 1,
+      size: 0.2 * Math.log((i + 1) * 50), seed: 20000 * rand(), scale: 1,
     };
   });
   runStart = clock;
   trails = bodies.map(() => []);
 }
-newRun();
+// The default run: a saved simulation (frames recorded from a run I liked), played back
+// exactly as a fresh one would be. "new run" / the seed field generate random ones.
+async function loadSaved() {
+  const [bin, meta] = await Promise.all([
+    fetch("run.bin").then(r => r.arrayBuffer()), fetch("default-run.json").then(r => r.json())]);
+  const [N, B] = new Uint32Array(bin, 0, 2);
+  const t = new Float32Array(bin, 8, N), p = new Float32Array(bin, 8 + N * 4, N * B * 3);
+  frames = Array.from({ length: N }, (_, i) => ({
+    t: t[i], pos: Array.from({ length: B }, (_, o) => Array.from(p.subarray((i * B + o) * 3, (i * B + o) * 3 + 3))) }));
+  bodies = meta.bodies.map((m, i) => ({ pos: frames[0].pos[i].slice(), bnormal: m.bnormal, size: m.size, seed: m.seed, scale: 1 }));
+  runStart = clock;
+  trails = bodies.map(() => []);
+}
 
 /* ───────────── camera + input ───────────── */
 
@@ -931,13 +952,16 @@ const CAM_EYE = [0, 14, 52];   // sees the whole ±20 starting cube
 
 function resize() {
   // Luminary renders at 1:1 pixels; keep that crisp look on high-DPI screens too.
-  const w = innerWidth, h = innerHeight;
+  const w = canvas.clientWidth | 0, h = canvas.clientHeight | 0;
+  if (!w || !h) return;
   if (w !== W || h !== H) { W = canvas.width = w; H = canvas.height = h; }
 }
 
 /* ───────────── frame ───────────── */
 
 let last = performance.now();
+const FOLLOW_DIST = 6;       // how far behind the followed object the camera sits
+let followDir = [0, 0, 1];
 
 function frame(now) {
   const dt = clamp((now - last) / 1000, 0, 1 / 30);
@@ -958,8 +982,13 @@ function frame(now) {
     while (trails[i].length > TRAIL_PTS || (trails[i].length && simTime - trails[i][0].t > TRAIL_TIME)) trails[i].shift();
   });
 
-  /* camera: fixed */
-  const eye = CAM_EYE;
+  /* camera: follow = sit behind body 0, looking at the origin (as in Luminary); otherwise fixed overview */
+  let eye = CAM_EYE;
+  if (params.follow) {
+    const p = bodies[0].pos, l = Math.hypot(p[0], p[1], p[2]);
+    if (l > 1e-3) followDir = [p[0] / l, p[1] / l, p[2] / l];
+    eye = [p[0] + followDir[0] * FOLLOW_DIST, p[1] + followDir[1] * FOLLOW_DIST, p[2] + followDir[2] * FOLLOW_DIST];
+  }
   const aspect = W / H;
   const vp = mul(perspective(FOV, aspect, NEAR, FAR), lookAt(eye, CAM_TARGET, [0, 1, 0]));
   const fwd = norm(sub(CAM_TARGET, eye)), right = norm(cross(fwd, [0, 1, 0])), up = cross(right, fwd);
@@ -1004,7 +1033,7 @@ function frame(now) {
   gl.uniform1f(holeProg.u.TIME, simTime * 6.0);
   gl.uniform1f(holeProg.u.u_fade, fade);
   const visible = bodies.filter(b => b.scale > 0.02);
-  visible.forEach((b, i) => holeData.set([...b.pos, ...b.bnormal, b.size * b.scale, b.seed], i * 8));
+  visible.forEach((b, i) => holeData.set([...b.pos, ...b.bnormal, b.size * b.scale * params.size, b.seed], i * 8));
   gl.bindVertexArray(holeVao);
   gl.bindBuffer(gl.ARRAY_BUFFER, holeBuf);
   gl.bufferSubData(gl.ARRAY_BUFFER, 0, holeData);
@@ -1042,4 +1071,46 @@ function frame(now) {
 
   requestAnimationFrame(frame);
 }
-requestAnimationFrame(frame);
+// falls back to a random run if the saved one can't be fetched (e.g. page opened as file://)
+loadSaved().catch(() => newRun()).then(() => requestAnimationFrame(frame));
+
+
+/* ───────────── settings panel ───────────── */
+{
+  const panel = document.getElementById("panel");
+  const live = { trail: v => (TRAIL_TIME = v), trailWidth: v => (TRAIL_WIDTH = v), size: () => {} };
+  const fmt = (k, v) => (k === "count" || k === "duration" ? v : +v.toFixed(2)) + (k === "duration" ? " s" : k === "trail" ? " s" : k === "trailWidth" ? " px" : "");
+  panel.querySelectorAll("input[type=range]").forEach(inp => {
+    const k = inp.dataset.p, out = inp.parentElement.querySelector("output");
+    inp.value = params[k]; out.textContent = fmt(k, params[k]);
+    inp.addEventListener("input", () => {
+      params[k] = +inp.value; out.textContent = fmt(k, params[k]);
+      if (live[k]) live[k](params[k]);
+    });
+    if (!live[k]) inp.addEventListener("change", () => restart());   // changes the simulation: re-run
+  });
+  const seedIn = document.getElementById("seed");
+  seedIn.value = params.seed;
+  seedIn.addEventListener("change", () => { params.seed = (+seedIn.value | 0) || 1; seedIn.value = params.seed; restart(); });
+  function restart() {
+    const btn = document.getElementById("rerun");
+    btn.textContent = "simulating…";
+    setTimeout(() => { newRun(); btn.textContent = "new run"; }, 20);
+  }
+  document.getElementById("rerun").addEventListener("click", () => {
+    params.seed = 1 + Math.floor(Math.random() * 999999); seedIn.value = params.seed; restart();
+  });
+  document.getElementById("reset").addEventListener("click", () => {
+    Object.assign(params, { count: 30, k: 10, speed: 0.5, trail: 2, follow: true, seed: 1 }); seedIn.value = 1;
+    TRAIL_TIME = 2; syncCam();
+    document.getElementById("rerun").textContent = "loading…";
+    loadSaved().then(() => (document.getElementById("rerun").textContent = "new run"));
+    panel.querySelectorAll("input[type=range]").forEach(inp => {
+      inp.value = params[inp.dataset.p]; inp.parentElement.querySelector("output").textContent = fmt(inp.dataset.p, params[inp.dataset.p]);
+    });
+  });
+  const camBtn = document.getElementById("cam");
+  function syncCam() { camBtn.textContent = "camera: " + (params.follow ? "follow" : "fixed"); }
+  camBtn.addEventListener("click", () => { params.follow = !params.follow; syncCam(); });
+  syncCam();
+}

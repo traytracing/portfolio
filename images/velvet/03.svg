@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" width="1200" height="1200">
+<defs><radialGradient id="g" cx="35%" cy="30%" r="80%"><stop offset="0" stop-color="#d6a273"/><stop offset="1" stop-color="#5a3c49"/></radialGradient></defs>
+<rect width="1200" height="1200" fill="url(#g)"/>
+<circle cx="744" cy="660" r="264" fill="#5a3c49" opacity=".55"/>
+<circle cx="744" cy="660" r="264" fill="none" stroke="#eddeb3" stroke-opacity=".35" stroke-width="6"/>
+<text x="50%" y="1140" text-anchor="middle" font-family="monospace" font-size="34" fill="#eddeb3" fill-opacity=".7">velvet render 03 — placeholder</text>
+</svg>
