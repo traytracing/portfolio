@@ -195,7 +195,7 @@ html.ink-cursor, html.ink-cursor * { cursor: none !important; }
 html.ink-cursor input[type=number] { cursor: text !important; }
 html.ink-cursor dialog[open], html.ink-cursor dialog[open] * { cursor: zoom-out !important; }   /* the lightbox sits above the ink layer */
 
-/* scratch-off projects (?scratch): one sheet per project body, under the ink cursor */
+/* scratch-off projects (default; ?noscratch to disable): one sheet per project body, under the ink cursor */
 #xv6, #skyblock, #velvet, #luminary { position: relative; }
 .scratch { position: absolute; left: 0; z-index: 20; image-rendering: pixelated; }
 .specks { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 25; pointer-events: none; image-rendering: pixelated; }

@@ -1,4 +1,4 @@
-/* Scratch-off projects: with ?scratch in the URL, each project's body (everything under its
+/* Scratch-off projects (on by default; ?noscratch turns them off): each project's body (everything under its
    title) sits under a dithered sheet. The sheet uses the same banded dither as the Luminary
    hole shader's Bayer variant: a smooth tone is split into 8 gray bands, and a 1px 4x4 Bayer
    offset of up to one band picks between neighbouring bands. The word "scratch" is encoded in
@@ -9,7 +9,7 @@
    yellow and pink pixel sprites that dither in, rise slowly from its surface with a lazy
    sway, and step down through smaller sprite frames at the end instead of fading. */
 (() => {
-  if (!/[?&]scratch\b/.test(location.search)) return;
+  if (/[?&]noscratch\b/.test(location.search)) return;
   document.documentElement.classList.add("scratch-mode");   // extra room under titles for the top fade
 
   const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + 0.5) / 16);
