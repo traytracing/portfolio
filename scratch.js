@@ -57,7 +57,7 @@
       const m = document.createElement("canvas"); m.width = W; m.height = H;
       const mg = m.getContext("2d");
       mg.font = "700 64px 'Kode Mono', monospace"; mg.textAlign = "center"; mg.textBaseline = "middle";
-      mg.fillText("scratch", W / 2, Math.min(H / 2, 180));
+      mg.fillText("scratch", W / 2, H / 2);                 // dead centre of the sheet
       const md = mg.getImageData(0, 0, W, H).data;
       this.word = new Uint8Array(W * H);
       for (let k = 0; k < this.word.length; k++) this.word[k] = md[k * 4 + 3] > 127;
