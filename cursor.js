@@ -14,8 +14,10 @@
   const g = cv.getContext("2d");
 
   let W = 0, H = 0, FW = 0, FH = 0, field = new Float32Array(0);
+  let lastSX = scrollX, lastSY = scrollY, accX = 0, accY = 0;   // scroll bookkeeping (see followScroll)
   function resize() {
-    W = cv.width = innerWidth; H = cv.height = innerHeight;
+    W = cv.width = innerWidth + CELL; H = cv.height = innerHeight + CELL;   // one cell spare for the sub-cell scroll offset
+    cv.style.width = W + "px"; cv.style.height = H + "px";
     FW = Math.ceil(W / CELL) + 2; FH = Math.ceil(H / CELL) + 2;
     field = new Float32Array(FW * FH);
   }
@@ -30,6 +32,7 @@
 
   // add a soft round stamp of ink to the field
   function stamp(x, y, r, amt) {
+    x += accX; y += accY;                 // viewport → canvas (the canvas sits up to one cell up/left)
     const cx = x / CELL, cy = y / CELL, cr = r / CELL + 1;
     for (let j = Math.max(0, Math.floor(cy - cr)); j <= Math.min(FH - 1, Math.ceil(cy + cr)); j++)
       for (let i = Math.max(0, Math.floor(cx - cr)); i <= Math.min(FW - 1, Math.ceil(cx + cr)); i++) {
@@ -40,16 +43,42 @@
       }
   }
 
+  // the ink is stuck to the page: when it scrolls, shift the field (whole cells) and every
+  // remembered position, so scrolling under a still mouse draws a trail too
+  function followScroll() {
+    const dX = scrollX - lastSX, dY = scrollY - lastSY;
+    lastSX = scrollX; lastSY = scrollY;
+    if (!dX && !dY) return;
+    px -= dX; py -= dY;
+    for (const d of drips) { d.x -= dX; d.y -= dY; }
+    accX += dX; accY += dY;
+    const ci = Math.floor(accX / CELL), cj = Math.floor(accY / CELL);   // whole cells move the field,
+    accX -= ci * CELL; accY -= cj * CELL;                               // the 0..3px left over moves the canvas
+    cv.style.transform = `translate(${-accX}px, ${-accY}px)`;
+    if (!ci && !cj) return;
+    const next = new Float32Array(FW * FH);
+    for (let j = 0; j < FH; j++) {
+      const sj = j + cj; if (sj < 0 || sj >= FH) continue;
+      for (let i = 0; i < FW; i++) { const si = i + ci; if (si >= 0 && si < FW) next[j * FW + i] = field[sj * FW + si]; }
+    }
+    field = next;
+  }
+
   let last = performance.now(), t = 0;
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000); last = now; t += dt;
+    if (seen) followScroll(); else { lastSX = scrollX; lastSY = scrollY; }
 
     // fade everything left behind
     const keep = Math.pow(0.12, dt);   // ~88% gone after a second
     let any = false;
     for (let k = 0; k < field.length; k++) if (field[k] > 0.004) { field[k] *= keep; any = true; } else field[k] = 0;
 
-    if (seen) {
+    // over a scratch sheet the cursor lays no ink (the trail outside keeps fading as usual),
+    // and it doesn't connect the entry point to the exit point when it comes back
+    const hidden = document.documentElement.classList.contains("on-scratch");
+    if (hidden) { px = mx; py = my; }
+    else if (seen) {
       // trail: stamp along the path since the last frame
       const dist = Math.hypot(mx - px, my - py), steps = Math.max(1, Math.ceil(dist / 3));
       const wob = 1 + 0.12 * Math.sin(t * 5.3) * Math.sin(t * 2.1);   // the blob breathes a little
@@ -95,7 +124,7 @@
       }
     }
     // a solid 3x3 core so the hotspot is exact
-    if (seen) { g.fillStyle = "#fff"; g.fillRect(Math.round(mx) - 1, Math.round(my) - 1, 3, 3); }
+    if (seen && !hidden) { g.fillStyle = "#fff"; g.fillRect(Math.round(mx + accX) - 1, Math.round(my + accY) - 1, 3, 3); }
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
