@@ -446,7 +446,7 @@ vec2 rotate(vec2 p, float a)
 }
 
 bool dither() {
-    vec2 cell = floor(gl_FragCoord.xy / 2.7);
+    vec2 cell = floor(gl_FragCoord.xy / 1.0);   // was 2.7: non-integer cells made uneven squares
     bool dither = mod(cell.x + cell.y, 2.0) < 1.0;
     return dither;
 }
@@ -971,8 +971,10 @@ function frame(now) {
 
   // play the precomputed run back in real time; start a new pair when it ends
   let t = clock - runStart;
+  // loop: when the run reaches its last frame, start it over from the beginning
+  if (t > frames[frames.length - 1].t) { runStart = clock; t = 0; trails = bodies.map(() => []); }
   // Luminary renders discrete frames: renderTime = times.front() + renderFrame / fps
-  const renderFrame = Math.floor(Math.min(t, frames[frames.length - 1].t) * FPS);
+  const renderFrame = Math.floor(t * FPS);
   sample(frames, f32(renderFrame / FPS)).forEach((p, i) => (bodies[i].pos = p));
   const simTime = clock;
 
@@ -993,7 +995,7 @@ function frame(now) {
   const vp = mul(perspective(FOV, aspect, NEAR, FAR), lookAt(eye, CAM_TARGET, [0, 1, 0]));
   const fwd = norm(sub(CAM_TARGET, eye)), right = norm(cross(fwd, [0, 1, 0])), up = cross(right, fwd);
 
-  const fade = 1;   // no fading: the run plays once and the last frame stays up
+  const fade = 1;   // no fading
 
   gl.viewport(0, 0, W, H);
   const bg = [0.106, 0.110, 0.173].map(c => c * fade);

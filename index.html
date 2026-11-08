@@ -4,150 +4,158 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>traytracing — graphics &amp; simulation</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8' shape-rendering='crispEdges'%3E%3Crect width='8' height='8' fill='%23161616'/%3E%3Cg fill='%23fff'%3E%3Crect x='3' y='1' width='2' height='6'/%3E%3Crect x='1' y='2' width='6' height='2'/%3E%3Crect x='5' y='6' width='2' height='1'/%3E%3C/g%3E%3C/svg%3E" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Kode+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="sky" aria-hidden="true">
-  <svg class="doodles" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <filter id="air" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="80"/></filter>
-      <filter id="soft" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="7"/></filter>
-      <filter id="edge" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="1.6"/></filter>
-      <filter id="grain" x="0" y="0" width="100%" height="100%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="5" result="n"/>
-        <feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0.9 0.9 0.9 0 -0.9"/>
-      </filter>
-      <linearGradient id="base" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="#1d0b36"/><stop offset=".55" stop-color="#150726"/><stop offset="1" stop-color="#220d3d"/>
-      </linearGradient>
-    </defs>
-    <rect width="1600" height="1000" fill="url(#base)"/>
+  <aside class="side">
+    <a class="wordmark" href="#top">traytracing</a>
+    <p class="role">Graphics and simulation programming. Renderers, physics and shaders, mostly written from the ground up.</p>
 
-    <!-- airbrushed colour fields -->
-    <g filter="url(#air)">
-      <ellipse cx="260" cy="180" rx="420" ry="260" fill="#5b2a9e" opacity=".55"/>
-      <ellipse cx="900" cy="760" rx="520" ry="240" fill="#3d1d6e" opacity=".7"/>
-      <ellipse cx="1500" cy="300" rx="360" ry="300" fill="#6c35b8" opacity=".45"/>
-      <ellipse cx="1330" cy="170" rx="230" ry="160" fill="#ffd23f" opacity=".5"/>
-      <ellipse cx="170" cy="880" rx="260" ry="150" fill="#f2b705" opacity=".32"/>
-    </g>
-
-    <!-- broad soft brush strokes -->
-    <g fill="none" stroke-linecap="round" filter="url(#soft)">
-      <path d="M-60,330 C260,200 480,520 820,380 S1320,180 1680,330" stroke="#7a3fc4" stroke-width="110" opacity=".34"/>
-      <path d="M-40,760 C220,640 520,900 880,800 S1380,640 1660,780" stroke="#4b2488" stroke-width="130" opacity=".55"/>
-      <path d="M200,-40 C380,160 300,420 520,560 S760,860 700,1060" stroke="#6c35b8" stroke-width="90" opacity=".3"/>
-      <path d="M1000,-40 C1180,120 1080,340 1280,470 S1560,640 1660,560" stroke="#ffd23f" stroke-width="70" opacity=".4"/>
-      <path d="M-30,900 C120,820 260,900 420,830" stroke="#f2b705" stroke-width="60" opacity=".4"/>
-    </g>
-
-    <!-- crisp-ish wet-paint accents -->
-    <g fill="none" stroke-linecap="round" filter="url(#edge)">
-      <path d="M1180,110 C1280,60 1420,70 1500,150" stroke="#ffe27a" stroke-width="16" opacity=".65"/>
-      <path d="M1220,170 C1300,130 1400,140 1460,200" stroke="#ffd23f" stroke-width="10" opacity=".55"/>
-      <path d="M60,880 C150,840 250,850 330,890" stroke="#ffd23f" stroke-width="12" opacity=".5"/>
-      <path d="M40,260 C200,170 360,300 560,230" stroke="#b58cf0" stroke-width="9" opacity=".4"/>
-      <path d="M700,930 C900,880 1100,950 1320,890" stroke="#9b5de5" stroke-width="11" opacity=".4"/>
-      <path d="M1380,640 C1460,600 1540,640 1600,700" stroke="#b58cf0" stroke-width="8" opacity=".35"/>
-    </g>
-
-    <!-- canvas grain -->
-    <rect width="1600" height="1000" filter="url(#grain)" opacity=".14" style="mix-blend-mode:soft-light"/>
-  </svg>
-  </div>
-  <header class="top">
-    <a class="mark" href="https://github.com/traytracing">traytracing</a>
-    <nav>
-      <a href="#work">work</a>
-      <a href="#velvet">velvet</a>
-      <a href="#about">about</a>
-      <a href="#contact">contact</a>
+    <nav class="toc" aria-label="Contents">
+      <a href="#xv6"><span class="lead">xv6 Operating System</span></a>
+      <a href="#skyblock"><span class="lead">Flip Finder</span></a>
+      <a href="#velvet"><span class="lead">Velvet Engine</span></a>
+      <a href="#luminary"><span class="lead">Luminary</span></a>
+      <a href="#about"><span class="lead">About</span></a>
+      <a href="#contact"><span class="lead">Contact</span></a>
+      <a href="https://github.com/traytracing"><span class="lead">GitHub</span><span class="no">↗</span></a>
     </nav>
-  </header>
 
-  <main>
-    <section class="hero">
-      <h1>Luminary</h1>
-      <p class="lede">A gravity simulator that plays back as a field of black holes.</p>
+  </aside>
+
+  <main id="top">
+    <div class="ceiling" aria-hidden="true"></div>
+    <section id="xv6">
+      <header class="head"><span class="dash"></span><h1>xv6 Operating System</h1><a class="repo" href="https://pdos.csail.mit.edu/6.1810/2026/">MIT 6.1810 ↗</a></header>
+      <p class="meta"><span>C · RISC-V · xv6 · QEMU · Git</span><span>Feb 2026 – Present</span></p>
+      <ul class="points">
+        <li>Implemented low level operating system utilities in C for xv6, a Unix like RISC-V teaching kernel run under QEMU, working directly against its system call interface (<a class="inline" href="https://pdos.csail.mit.edu/6.1810/2026/labs/util.html">MIT 6.1810 Unix Utilities Lab</a>).</li>
+        <li>Built a bounds safe memory inspection utility in C that interprets raw bytes as 8, 16, 32, and 64 bit values through typed pointers, preventing reads beyond valid memory regions while supporting strings and pointer backed data.</li>
+        <li>Extended find with command execution using fork, exec, and wait, creating child processes for matched files and integrating process creation, argument construction, and synchronization within the xv6 environment.</li>
+        <li>Built Unix style utilities including sleep, numeric file processing, and recursive find, using low level system calls such as open, read, fstat, and pause while handling command line arguments, file descriptors, and directory structures in C.</li>
+      </ul>
     </section>
 
-    <figure class="window">
-      <div class="screen">
-        <canvas id="gl"></canvas>
-        <p class="error" id="error" hidden></p>
-        <aside id="panel" class="panel">
-          <label>bodies <output></output><input type="range" data-p="count" min="2" max="60" step="1"></label>
-          <label>gravity (k) <output></output><input type="range" data-p="k" min="1" max="50" step="0.5"></label>
-          <label>start speed <output></output><input type="range" data-p="speed" min="0" max="2" step="0.05"></label>
-          <label>trail length <output></output><input type="range" data-p="trail" min="0" max="6" step="0.25"></label>
-          <label>seed <input type="number" id="seed" min="1" step="1"></label>
-          <div class="btns"><button id="cam">camera: follow</button></div>
-          <div class="btns"><button id="rerun">new run</button><button id="reset">reset</button></div>
-        </aside>
-      </div>
-      <figcaption>An N-body simulator in C++ with an adaptive-timestep integrator, CUDA-interpolated playback and GLSL black-hole shaders.</figcaption>
-    </figure>
-
-    <section id="work">
-      <h2>work</h2>
-      <ul class="work">
-        <li>
-          <a href="https://github.com/traytracing/Luminary">
-            <span class="no">01</span>
-            <span class="name">Luminary</span>
-            <span class="desc">N-body simulator and GPU renderer</span>
-            <span class="arrow">↗</span>
-          </a>
-        </li>
-        <li>
-          <a href="#velvet">
-            <span class="no">02</span>
-            <span class="name">Velvet Engine</span>
-            <span class="desc">Stylized rendering engine (closed source)</span>
-            <span class="arrow">↓</span>
-          </a>
-        </li>
-        <li>
-          <a href="#">
-            <span class="no">03</span>
-            <span class="name">Project three</span>
-            <span class="desc">Short description</span>
-            <span class="arrow">↗</span>
-          </a>
-        </li>
+    <section id="skyblock">
+      <header class="head"><span class="dash"></span><h2>SkyBlock Auction Flip Finder</h2></header>
+      <p class="meta"><span>Java · Forge · Fastjson · Kafka · Redis · PostgreSQL · WebSocket</span><span>Jan 2024 – Dec 2024</span></p>
+      <dl class="stats">
+        <div><dt>200 ms</dt><dd>to flag a flip per API refresh</dd></div>
+        <div><dt>100k / min</dt><dd>auctions ingested, 144M a day</dd></div>
+        <div><dt>&lt; 10 ms</dt><dd>to parse each of 100 pages</dd></div>
+        <div><dt>&lt; 5 ms</dt><dd>reference price lookups</dd></div>
+      </dl>
+      <ul class="points">
+        <li>Built a Minecraft mod and Java backend data pipeline that flags underpriced Buy It Now auctions on Hypixel SkyBlock in 200 ms per API refresh by comparing new listings against recent sales.</li>
+        <li>Ingested 100,000 auction objects per minute (144 million per day) across 100 API pages with parallel pollers, parsing each page in under 10 ms with Fastjson and a full refresh in under 200 ms.</li>
+        <li>Published raw listings to Kafka and deduplicated them against a Redis set of seen auction IDs, dropping repeat listings from overlapping pollers before any downstream work.</li>
+        <li>Indexed listings in PostgreSQL and served reference price lookups from a read replica in under 5 ms, streaming flips through a second Kafka topic to mod and website clients over WebSocket.</li>
       </ul>
     </section>
 
     <section id="velvet">
-      <h2>velvet engine</h2>
+      <header class="head"><span class="dash"></span><h2>Velvet Engine</h2></header>
       <p class="blurb">A stylized rendering engine. The source stays private, so this is the gallery: stills straight out of the renderer.</p>
       <div class="gallery">
-        <figure><button type="button" class="shot" aria-label="Open render 01"><img src="images/velvet/01.svg" alt="Velvet Engine render 01" loading="lazy" width="1600" height="900"></button><figcaption>render 01</figcaption></figure>
-        <figure><button type="button" class="shot" aria-label="Open render 02"><img src="images/velvet/02.svg" alt="Velvet Engine render 02" loading="lazy" width="1000" height="1250"></button><figcaption>render 02</figcaption></figure>
-        <figure><button type="button" class="shot" aria-label="Open render 03"><img src="images/velvet/03.svg" alt="Velvet Engine render 03" loading="lazy" width="1200" height="1200"></button><figcaption>render 03</figcaption></figure>
-        <figure><button type="button" class="shot" aria-label="Open render 04"><img src="images/velvet/04.svg" alt="Velvet Engine render 04" loading="lazy" width="1500" height="1000"></button><figcaption>render 04</figcaption></figure>
-        <figure><button type="button" class="shot" aria-label="Open render 05"><img src="images/velvet/05.svg" alt="Velvet Engine render 05" loading="lazy" width="1000" height="1250"></button><figcaption>render 05</figcaption></figure>
-        <figure><button type="button" class="shot" aria-label="Open render 06"><img src="images/velvet/06.svg" alt="Velvet Engine render 06" loading="lazy" width="1600" height="900"></button><figcaption>render 06</figcaption></figure>
+        <figure><button type="button" class="shot" aria-label="Open render 01"><img src="images/velvet/01.svg" alt="Velvet Engine render 01" loading="lazy" width="1600" height="900"></button><figcaption>01</figcaption></figure>
+        <figure><button type="button" class="shot" aria-label="Open render 02"><img src="images/velvet/02.svg" alt="Velvet Engine render 02" loading="lazy" width="1000" height="1250"></button><figcaption>02</figcaption></figure>
+        <figure><button type="button" class="shot" aria-label="Open render 03"><img src="images/velvet/03.svg" alt="Velvet Engine render 03" loading="lazy" width="1200" height="1200"></button><figcaption>03</figcaption></figure>
+        <figure><button type="button" class="shot" aria-label="Open render 04"><img src="images/velvet/04.svg" alt="Velvet Engine render 04" loading="lazy" width="1500" height="1000"></button><figcaption>04</figcaption></figure>
+        <figure><button type="button" class="shot" aria-label="Open render 05"><img src="images/velvet/05.svg" alt="Velvet Engine render 05" loading="lazy" width="1000" height="1250"></button><figcaption>05</figcaption></figure>
+        <figure><button type="button" class="shot" aria-label="Open render 06"><img src="images/velvet/06.svg" alt="Velvet Engine render 06" loading="lazy" width="1600" height="900"></button><figcaption>06</figcaption></figure>
       </div>
     </section>
 
+    <section id="luminary">
+      <header class="head">
+        <span class="dash"></span>
+        <h2>Luminary</h2>
+        <a class="repo" href="https://github.com/traytracing/Luminary">github ↗</a>
+      </header>
+      <p class="lede">N-body simulation in C++, rendered with GLSL shaders.</p>
+
+      <figure class="window">
+        <div class="screen">
+          <canvas id="gl"></canvas>
+          <p class="error" id="error" hidden></p>
+          <aside id="panel" class="panel">
+            <label>bodies <output></output><input type="range" data-p="count" min="2" max="60" step="1"></label>
+            <label>gravity (k) <output></output><input type="range" data-p="k" min="1" max="50" step="0.5"></label>
+            <label>start speed <output></output><input type="range" data-p="speed" min="0" max="2" step="0.05"></label>
+            <label>trail length <output></output><input type="range" data-p="trail" min="0" max="6" step="0.25"></label>
+            <label>seed <input type="number" id="seed" min="1" step="1"></label>
+            <div class="btns"><button id="cam">camera: follow</button></div>
+            <div class="btns"><button id="rerun">new run</button><button id="reset">reset</button></div>
+          </aside>
+        </div>
+      </figure>
+    </section>
+
     <section id="about">
-      <h2>about</h2>
+      <header class="head"><span class="dash"></span><h2>About</h2></header>
       <p>A few sentences about you go here: what you make, what you care about, what you're looking for.</p>
     </section>
 
     <section id="contact">
-      <h2>contact</h2>
-      <p><a href="https://github.com/traytracing">github.com/traytracing</a></p>
+      <header class="head"><span class="dash"></span><h2>Contact</h2></header>
+      <p><a class="repo" href="https://github.com/traytracing">github.com/traytracing</a></p>
     </section>
+    <div class="floor" aria-hidden="true"></div>
   </main>
 
-  <footer>© <a href="https://github.com/traytracing">traytracing</a></footer>
   <dialog id="lightbox"><img alt=""><button type="button" aria-label="Close">×</button></dialog>
+  <script>
+    /* dithered rules, drawn per pixel at each line's real width (Bayer 4x4 ordered dither) */
+    const BAYER = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]];
+    function draw(w, h, density, shade = 21) {
+      const c = document.createElement("canvas"); c.width = w; c.height = h;
+      const g = c.getContext("2d"), img = g.createImageData(w, h);
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        if ((BAYER[y % 4][x % 4] + 0.5) / 16 < density(x, y, w)) { const i = (y * w + x) * 4; img.data[i] = img.data[i + 1] = img.data[i + 2] = shade; img.data[i + 3] = 255; }
+      }
+      g.putImageData(img, 0, 0); return c.toDataURL();
+    }
+    /* moiré: two sine beats multiplied, so dense knots drift along the line */
+    const moire = (x) => 0.5 + 0.5 * Math.sin(x / 14) * Math.sin(x / 5.3);
+    /* gradient pair: top band fades left→right, bottom band right→left, one blank row between */
+    const pair = (x, y, w) => y < 2 ? 1 - x / w : y > 2 ? x / w : 0;
+    document.querySelectorAll(".head").forEach(h => { const r = document.createElement("span"); r.className = "rule"; h.appendChild(r); });
+    function paint(el, h, density, pos) {
+      const w = Math.round(el.getBoundingClientRect().width); if (!w) return;
+      el.style.backgroundImage = `url(${draw(w, h, density)})`;
+      el.style.backgroundSize = `${w}px ${h}px`;
+      el.style.backgroundPosition = pos;
+    }
+    function paintAll() {
+      document.querySelectorAll(".head .rule").forEach(el => paint(el, 4, moire, "0 0"));
+      document.querySelectorAll(".toc").forEach(el => paint(el, 4, moire, "0 0"));
+      document.querySelectorAll(".toc a").forEach(el => paint(el, 5, pair, "0 100%"));
+      document.querySelectorAll(".dash").forEach((el, i) => paint(el, 4, x => moire(x + 23 * i), "0 0"));
+      /* photo frames + the Luminary window: sidebar-gray border around the photo, Bayer gradient fading outward from it */
+      document.querySelectorAll(".shot, .window").forEach(el => {
+        const r = el.getBoundingClientRect(), w = Math.round(r.width), h = Math.round(r.height); if (!w) return;
+        const frame = (x, y) => { const d = Math.min(x, y, w - 1 - x, h - 1 - y); return d >= 28 ? 1 : (d + 1) / 29; };   // d = 28: solid border; 0..27: sparser outward
+        /* black corners: a 4px moiré bracket on the border (same beat as the heading rules), tapering out along each edge */
+        const corner = (x, y) => {
+          const d = Math.min(x, y, w - 1 - x, h - 1 - y);
+          if (d < 25 || d > 28) return 0;
+          const along = Math.max(Math.min(x, w - 1 - x), Math.min(y, h - 1 - y)) - 25;   // distance from the corner
+          return Math.min(1, (along < 6 ? 1 : moire(along + 9)) * Math.max(0, 1 - along / 40) * 1.4);
+        };
+        el.style.backgroundImage = `url(${draw(w, h, frame, 183)})`;   // sidebar gray (#b7b7b7)
+        el.style.backgroundSize = `${w}px ${h}px`;
+        el.style.setProperty("--corners", `url(${draw(w, h, corner)})`);   // own layer (::before) so they lift with the photo
+      });
+    }
+    new ResizeObserver(paintAll).observe(document.body);
+    document.fonts.ready.then(paintAll);
+  </script>
   <script src="main.js"></script>
+  <script src="cursor.js"></script>
   <script>
     const lb = document.getElementById("lightbox"), lbImg = lb.querySelector("img");
     document.querySelectorAll(".shot").forEach(b => b.addEventListener("click", () => {
